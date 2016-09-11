@@ -1,0 +1,31 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 17
+    buildToolsVersion "24.0.2"
+
+    defaultConfig {
+        applicationId "arduino.droid.elbosso.de.serveravailabilityalarmproject"
+        minSdkVersion 14
+        targetSdkVersion 17
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:support-v4:+'
+    compile "org.igniterealtime.smack:smack-android:4.1.0-rc1"
+    // Optional for XMPPTCPConnection
+    compile "org.igniterealtime.smack:smack-tcp:4.1.0-rc1"
+    // Optional for XMPP-IM (RFC 6121) support (Roster, Threaded Chats, …)
+    compile "org.igniterealtime.smack:smack-im:4.1.0-rc1"
+    // Optional for XMPP extensions support
+    compile "org.igniterealtime.smack:smack-extensions:4.1.0-rc1"}
