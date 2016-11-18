@@ -36,18 +36,34 @@ package de.elbosso.serveravailabilityalarm;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.widget.Toast;
 
 import org.jivesoftware.smack.AbstractXMPPConnection;
-import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.SASLAuthentication;
 import org.jivesoftware.smack.chat.Chat;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Created by elbosso on 9/11/16.
@@ -63,7 +79,7 @@ public class SendJabberMessageTask extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... params) {
 
-        // params comes from the execute() call: params[0] is the url.
+        // params comes from the execute() call: params[0] is the url
         sendJabberMessage(context,params[0],params[1]);
         return params[1];
     }
@@ -72,8 +88,32 @@ public class SendJabberMessageTask extends AsyncTask<String, Void, String> {
     protected void onPostExecute(String result) {
         Toast.makeText(context, "sent test jabber message to " + result, Toast.LENGTH_SHORT).show();
     }
-    public static void sendJabberMessage(final Context context,java.lang.String messageContent,java.lang.String receiver)
-    {
+    public static void sendJabberMessage(final Context context,java.lang.String messageContent,java.lang.String receiver)   {
+        try {
+        Resources res = context.getResources();
+        String packageName = context.getApplicationContext().getPackageName();
+            int id = res.getIdentifier("raw/jouliejabber.jks", "raw", packageName);
+            id = res.getIdentifier("jouliejabber.jks", "raw", packageName);
+        InputStream ins = res.openRawResource(R.raw.jouliejabber);
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(ins, "wz8ohis6ft".toCharArray());
+        TrustManagerFactory tmf =TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ks);
+        SSLContext sslctx = SSLContext.getInstance("TLS");
+        sslctx.init(null, tmf.getTrustManagers(), new SecureRandom());
+            TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+
+            } };
+//            sslctx.init(null, trustAllCerts, new SecureRandom());
         XMPPTCPConnectionConfiguration.Builder configBuilder = XMPPTCPConnectionConfiguration.builder();
         SharedPreferences settings = context.getSharedPreferences(MainActivity.PREFS_NAME, 0);
         String jabber_user = settings.getString("jabber_user", null);
@@ -87,9 +127,15 @@ public class SendJabberMessageTask extends AsyncTask<String, Void, String> {
             configBuilder.setHost(jabber_host);
             configBuilder.setPort(jabber_port);
             configBuilder.setServiceName("serveravailabilityalarm");
-            configBuilder.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
+            configBuilder.setCustomSSLContext(sslctx);
+            HostnameVerifier allHostsValid = new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+            configBuilder.setHostnameVerifier(allHostsValid);
+//            configBuilder.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
 
-            try {
                 AbstractXMPPConnection connection = new XMPPTCPConnection(configBuilder.build());
                 SASLAuthentication.unBlacklistSASLMechanism("PLAIN");
                 SASLAuthentication.blacklistSASLMechanism("DIGEST-MD5");
@@ -114,30 +160,30 @@ public class SendJabberMessageTask extends AsyncTask<String, Void, String> {
                 newChat.close();
                 // Disconnect from the server
                 connection.disconnect();
-            } catch (final Throwable e) {
-                e.printStackTrace();
+        }
+        else
+        {
+            Toast.makeText(context, "please check jabber configuration!", Toast.LENGTH_SHORT).show();
+        }
+        } catch (final Throwable e) {
+            e.printStackTrace();
 /*                activity.runOnUiThread(new Runnable() {
                     public void run() {
                         Toast.makeText(context, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
 */                // Get a handler that can be used to post to the main thread
-                Handler mainHandler = new Handler(context.getMainLooper());
+            Handler mainHandler = new Handler(context.getMainLooper());
 
-                Runnable myRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(context, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                    } // This is your code
-                };
-                mainHandler.post(myRunnable);
+            Runnable myRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(context, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                } // This is your code
+            };
+            mainHandler.post(myRunnable);
 
-                //reportHelper.showExceptionInformation(e.getLocalizedMessage());
-            }
-        }
-        else
-        {
-            Toast.makeText(context, "please check jabber configuration!", Toast.LENGTH_SHORT).show();
+            //reportHelper.showExceptionInformation(e.getLocalizedMessage());
         }
     }
 
