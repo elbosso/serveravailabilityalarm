@@ -11,3 +11,4 @@
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/elbosso/serveravailabilityalarm/issues)
 [![GitHub contributors](https://img.shields.io/github/contributors/elbosso/serveravailabilityalarm.svg)](https://GitHub.com/elbosso/serveravailabilityalarm/graphs/contributors/)
 [![Github All Releases](https://img.shields.io/github/downloads/elbosso/serveravailabilityalarm/total.svg)](https://github.com/elbosso/serveravailabilityalarm)
+[![Website elbosso.github.io](https://img.shields.io/website-up-down-green-red/https/elbosso.github.io.svg)](https://elbosso.github.io/)
